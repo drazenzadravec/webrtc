@@ -1,0 +1,6 @@
+{
+    "WebApplicationServerPort": 3840,
+    "AppID": "",
+    "AppSecret": "",
+    "CallBaseUrl": "https://rtc.live.cloudflare.com/v1/apps/"
+}
