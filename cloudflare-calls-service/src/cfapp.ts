@@ -15,7 +15,7 @@ const port = process.env.port || appSettings.WebApplicationServerPort;
 var appServer = new ApplicationServer({ appSettings: appSettings });
 
 // http server.
-var httpServer1 = http.createServer(async function (req, res) {
+var httpServer = http.createServer(async function (req, res) {
 
 	// application server.
 	await appServer.processRequestAsync(req, res);
