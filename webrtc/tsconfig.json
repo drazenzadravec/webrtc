@@ -1,0 +1,20 @@
+{
+    "exclude": [
+        "node_modules"
+    ],
+    "compilerOptions": {
+        "noImplicitAny": false,
+        "noEmitOnError": true,
+        "removeComments": false,
+        "target": "es2022",
+        "lib": [ "es2022", "dom", "dom.iterable" ],
+        "module": "NodeNext",
+        "sourceMap": false,
+        "declaration": false,
+        "esModuleInterop": true,
+        "forceConsistentCasingInFileNames": true,
+        "strict": false,
+        "skipLibCheck": true,
+        "allowSyntheticDefaultImports": true
+    }
+}

@@ -1,0 +1,41 @@
+{
+	"name": "webrtc-nequeo",
+	"version": "8.11.15",
+	"description": "webrtc implementation",
+	"main": "main.mjs",
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1",
+		"build": "tsc --build",
+		"clean": "tsc --build --clean",
+		"lint": "jshint .",
+		"validate": "npm ls"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/nequeo/resource/tree/master/webrtc"
+	},
+	"keywords": [
+		"webrtc", "javascript", "typescript", "rtc", "peer", 
+		"connection", "nodejs", "websocket", "browser", "cloudflare", 
+		"video", "audio", "stream", "mesh", "sfu", "p2p"
+	],
+	"author": "Drazen Zadravec",
+	"license": "ISC",
+	"bugs": {
+		"url": "https://github.com/nequeo/resource/issues"
+	},
+	"homepage": "https://github.com/nequeo/resource/tree/master/webrtc",
+	"devDependencies": {
+		"@types/node": "^20.11.6",
+		"@typescript-eslint/eslint-plugin": "^6.19.1",
+		"@typescript-eslint/parser": "^6.19.1",
+		"browserify": "^17.0.0",
+		"esbuild": "0.20.0",
+		"eslint": "^8.56.0",
+		"precommit-hook": "^3.0.0",
+		"request": "^2.88.2",
+		"tape": "^5.7.4",
+		"typescript": "^5.3.3",
+		"uglify-js": "^3.17.4"
+	}
+}
