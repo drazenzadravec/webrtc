@@ -1,0 +1,7 @@
+{
+    "WebSocketServerPort": 3839,
+    "AccessToken": "TODO add internal access token",
+    "WebSocketClientTimeoutConnect": 40,
+    "WebSocketClientTimeoutExpiry": 3600,
+    "ActiveControlInterval": 10
+}
