@@ -1,6 +1,6 @@
 # WebRTC Tools
 
-This contians a complete implementation of a WebRTC client.
+This contains a complete implementation of a WebRTC client.
 
 TypeScript, Javascript
 
