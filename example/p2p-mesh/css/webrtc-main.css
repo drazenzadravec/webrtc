@@ -1,0 +1,282 @@
+html {
+    overflow-y: scroll
+}
+
+body {
+    font-family: arial;
+    font-size: 12px
+}
+
+.body-content {
+    padding-top: 50px;
+    padding-left: 15px;
+    padding-right: 15px
+}
+
+#dialogVideoRemote {
+    width: 320px;
+    height: 300px;
+    padding: .1em
+}
+
+#dialogVideoLocal {
+    width: 320px;
+    height: 300px;
+    padding: .1em
+}
+
+#resizableRemote {
+    background-position: top left
+}
+
+#resizableRemote {
+    width: 300px;
+    height: 270px;
+    padding: .1em
+}
+
+#remoteVideo {
+    margin-top: .1em;
+    margin-left: .1em;
+    margin-right: .1em;
+    margin-bottom: .1em
+}
+
+#resizableLocal {
+    background-position: top left
+}
+
+#resizableLocal {
+    width: 300px;
+    height: 270px;
+    padding: .1em
+}
+
+#localVideo {
+    margin-top: .1em;
+    margin-left: .1em;
+    margin-right: .1em;
+    margin-bottom: .1em
+}
+
+div {
+    margin-top: .2em;
+    margin-left: .2em;
+    margin-right: .2em;
+    margin-bottom: .2em
+}
+
+.divID {
+    width: 400px
+}
+
+.divID1 {
+    width: 450px
+}
+
+.divSpacer {
+    margin-top: 1.5em;
+    margin-left: 1.5em;
+    margin-right: 1.5em;
+    margin-bottom: 1.5em
+}
+
+.divAlertText {
+    width: 600px;
+    border: rgba(0,0,0,.349);
+    border-style: solid;
+    border-width: 1px
+}
+
+.divAlertTextInt {
+    width: 590px;
+    border: rgba(0,0,0,.349);
+    border-style: solid;
+    border-width: 1px
+}
+
+.divAlertListText {
+    width: 590px;
+    border: rgba(0,0,0,.349);
+    border-style: solid;
+    border-width: 1px
+}
+
+.labelClass {
+    display: block;
+    float: left;
+    width: 105px
+}
+
+.labelClass1 {
+    display: block;
+    float: left;
+    width: 160px
+}
+
+.buttonContact {
+    width: 130px
+}
+
+.remoteContactsStateClass {
+    display: block;
+    float: right;
+    width: 170px;
+    text-align: center;
+    color: #556b2f
+}
+
+.remoteContactsClass {
+    display: block;
+    float: right;
+    width: 100px
+}
+
+.textInput {
+    width: 200px
+}
+
+.textSendMessage {
+    width: 590px;
+    border: red;
+    border-style: solid;
+    border-width: 1px
+}
+
+div#container {
+    margin: 0 auto;
+    max-width: 60em;
+    padding: 1em 1.5em 1.3em
+}
+
+div.progress, div#bitrate {
+    margin: 0 0 1em
+}
+
+div.progress {
+    display: inline-block;
+    width: 600px
+}
+
+div.labelProgress {
+    display: inline-block;
+    width: 70px
+}
+
+form {
+    margin: 0 0 1em;
+    white-space: nowrap
+}
+
+progress {
+    width: 515px
+}
+
+.nav-scroller {
+    position: relative;
+    z-index: 2;
+    height: 2.75rem;
+    overflow-y: hidden
+}
+
+    .nav-scroller .nav {
+        display: -ms-flexbox;
+        display: flex;
+        -ms-flex-wrap: nowrap;
+        flex-wrap: nowrap;
+        padding-bottom: 1rem;
+        margin-top: -1px;
+        overflow-x: auto;
+        color: rgba(255,255,255,.75);
+        text-align: center;
+        white-space: nowrap;
+        -webkit-overflow-scrolling: touch
+    }
+
+.nav-underline .nav-link {
+    padding-top: .75rem;
+    padding-bottom: .75rem;
+    font-size: .875rem;
+    color: #6c757d
+}
+
+    .nav-underline .nav-link:hover {
+        color: #007bff
+    }
+
+.nav-underline .active {
+    font-weight: 500;
+    color: #343a40
+}
+
+.text-white-50 {
+    color: rgba(255,255,255,.5)
+}
+
+.bg-purple {
+    background-color: #6f42c1
+}
+
+.border-bottom {
+    border-bottom: 1px solid #e5e5e5
+}
+
+.box-shadow {
+    box-shadow: 0 .25rem .75rem rgba(0,0,0,.05)
+}
+
+.lh-100 {
+    line-height: 1
+}
+
+.lh-125 {
+    line-height: 1.25
+}
+
+.lh-150 {
+    line-height: 1.5
+}
+
+.tabHeader {
+    position: fixed;
+    top: 1px;
+    left: 0px;
+    width: 100%;
+    background-color: white;
+    z-index: 0;
+}
+
+/* Style tab links */
+.tabLink {
+    background-color: #555;
+    color: white;
+    float: left;
+    border: 1px solid #ddd;
+    border-radius: 5px 5px 5px 5px;
+    outline: none;
+    cursor: pointer;
+    padding: 5px 5px;
+    font-size: 12px;
+    width: 14.2%;
+}
+
+    .tabLink:hover {
+        background-color: #777;
+    }
+
+.tabLink-width-1 {
+    width: 9.0%;
+}
+
+/* Style the tab content (and add height:100% for full page content) */
+.tabContent {
+    display: none;
+    padding: 40px 20px 5px 20px;
+    height: 100%;
+}
+
+/* Style the tab content (and add height:100% for full page content) */
+.tabContent-inline {
+    padding: 25px 20px 5px 20px;
+    height: 100%;
+}
