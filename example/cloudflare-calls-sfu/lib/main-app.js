@@ -16,10 +16,13 @@ function onPageLoad() {
     // init local video.
     initLocalVideo();
 
+    var serviceBaseURL = "api/cf/call/";
+    var accessTokenUrlOrPath = "api/site/access/token";
+
     // load module.
     import('lib/main.mjs')
         .then((m) => {
-            m.authLoginAccessToken();
+            m.authLoginAccessToken(serviceBaseURL, accessTokenUrlOrPath);
         })
         .catch((e) => {
             console.error(e);
@@ -55,8 +58,8 @@ function whatBrowser() {
 }
 
 /**
- * Init local video.
- */
+* Init local video.
+*/
 function initLocalVideo() {
     $(function () {
         $("#resizableLocal").resizable({
@@ -296,7 +299,7 @@ function openTabPage(pageName, elmnt, color) {
     elmnt.style.backgroundColor = color;
 }
 
-var conferenceAppID = '';
+var applicationID = '';
 var uniqueID = '';
 
 var containerDivElement = null;
@@ -327,8 +330,9 @@ var stopCamButton = null;
 var toggleMuteAudioButton = null;
 var toggleMuteAllRemoteButton = null;
 
-var videoCallButton = null;
-var endCallButton = null;
+var videoCloudflareCallButton = null;
+var contactCloudflareCallButton = null;
+var endCloudflareCallButton = null;
 var alertTextElement = null;
 var alertTextBackElement = null;
 var alertTextMessageElement = null;

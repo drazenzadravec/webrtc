@@ -4,6 +4,36 @@
 var asyncFetch = new AsyncFetch();
 
 /**
+* get current access token.
+* @param {string}	url   the url or path
+* @param {Function}	resultAction   the token else empty. (token: string) => void
+*/
+export function getCurrentAccessToken(url, resultAction) {
+	// get current time.
+	getJsonRequest(url, (data) => {
+		try {
+			// if from aws api
+			if (data.isawsapi && data.issignedin) {
+				// get token
+				resultAction(data.token);
+			}
+			else {
+				// no token
+				resultAction("");
+			}
+		}
+		catch (e) {
+			// could not find element
+			console.warn(e);
+			resultAction("");
+		}
+	}, (error) => {
+		console.error(error);
+		resultAction("");
+	});
+}
+
+/**
 * get the json request.
 *
 * @param {string}	url   the url.

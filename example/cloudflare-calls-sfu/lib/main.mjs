@@ -1,80 +1,88 @@
 import * as util from '../mod/common.mjs';
-import { startWebRTC, stopWebRTC } from '../mod/webrtc.mjs';
+import * as mainFunc from './out/app-main.mjs';
+import { startCallClient, stopCallClient } from './callclient.mjs';
 import * as mainApp from './main-ext.mjs';
 /**
  * auth Login Access Token
+ * @param {string} serviceURL the service base URL.
+ * @param {string} accessTokenUrlOrPath the service URL or path to get access token.
  */
-export function authLoginAccessToken() {
-    // WebRTC options.
-    let webrtcOptions = {
-        debug: false,
-        signallingURL: "",
-        peerConnectionConfiguration: {
-            iceServers: [
-                {
-                    "urls": "stun:stun.l.google.com:19302"
-                }
-            ]
-        }
-    };
-    // access options
-    let accessOptions = {
-        useLoginAuth: false,
-        accessToken: "",
-        url: "",
-        username: "",
-        password: ""
-    };
-    // get auth details from the query string.
-    getAuthFromQueryString(webrtcOptions, accessOptions);
-    // Initialise the WebRTC application.
-    initialiseWebRTC(webrtcOptions, accessOptions);
+export function authLoginAccessToken(serviceURL, accessTokenUrlOrPath) {
+    // get the access token.
+    mainFunc.getCurrentAccessToken(accessTokenUrlOrPath, (token) => {
+        // Call options.
+        let callOptions = {
+            debug: false,
+            signallingURL: "",
+            accessToken: token,
+            serviceBaseURL: serviceURL,
+            peerConnectionConfiguration: {
+                iceServers: [
+                    {
+                        "urls": "stun:stun.cloudflare.com:3478"
+                    }
+                ]
+            }
+        };
+        // access options
+        let accessOptions = {
+            useLoginAuth: false,
+            accessToken: "",
+            url: "",
+            username: "",
+            password: ""
+        };
+        // get auth details from the query string.
+        getAuthFromQueryString(callOptions, accessOptions);
+        // Initialise the Call Client application.
+        initialiseCallClient(callOptions, accessOptions);
+    });
 }
 /**
- * get auth details from the query string.
- * @param {object}    webrtcOptions  the webrtc options.
- * @param {object}    accessOptions  the access options.
+* get auth details from the query string.
+* @param {object}    webrtcOptions  the webrtc options.
+* @param {object}    accessOptions  the access options.
 */
 export function getAuthFromQueryString(webrtcOptions, accessOptions) {
     // get the query.
-    let urlParams = new URLSearchParams(location.search);
-    let uniqueID = "";
-    let conferenceAppID = "";
+    var urlParams = new URLSearchParams(location.search);
+    var uniqueID = "";
+    var conferenceAppID = "";
     // get uniqueID
-    let hasUniqueID = urlParams.has('u');
+    var hasUniqueID = urlParams.has('u');
     if (hasUniqueID === true) {
         // get the value.
-        let uniqueIDValue = urlParams.get('u');
+        var uniqueIDValue = urlParams.get('u');
         if (uniqueIDValue !== "") {
             // uniqueID
             uniqueID = uniqueIDValue;
         }
     }
     // get applicationID
-    let hasApplicationID = urlParams.has('a');
+    var hasApplicationID = urlParams.has('a');
     if (hasApplicationID === true) {
         // get the value.
-        let applicationIDValue = urlParams.get('a');
+        var applicationIDValue = urlParams.get('a');
         if (applicationIDValue !== "") {
             // conferenceAppID
             conferenceAppID = applicationIDValue;
         }
     }
     // get websocket server 
-    let hasWebSocket = urlParams.has('ws');
+    var hasWebSocket = urlParams.has('ws');
     if (hasWebSocket === true) {
         // get the value.
-        let websocketValue = urlParams.get('ws');
+        var websocketValue = urlParams.get('ws');
         if (websocketValue !== "") {
             // websocket server
             webrtcOptions.signallingURL = websocketValue;
         }
     }
     // get token
-    let hasToken = urlParams.has('t');
+    var hasToken = urlParams.has('t');
     if (hasToken === true) {
         // get the value.
-        let tokenValue = urlParams.get('t');
+        var tokenValue = urlParams.get('t');
         if (tokenValue !== "") {
             // token
             accessOptions.accessToken = tokenValue;
@@ -82,86 +90,96 @@ export function getAuthFromQueryString(webrtcOptions, accessOptions) {
             mainApp.assignContact(uniqueID, conferenceAppID);
         }
     }
+    // get access token
+    var hasTokenAccess = urlParams.has('ac');
+    if (hasTokenAccess === true) {
+        // get the value.
+        var tokenAccessValue = urlParams.get('ac');
+        if (tokenAccessValue !== "") {
+            // token
+            webrtcOptions.accessToken = tokenAccessValue;
+        }
+    }
 }
 /**
- * Initialise the WebRTC application.
- * @param {object}    webrtcOptions  the webrtc options.
- * @param {object}    state  any state data.
- */
-export function initialiseWebRTC(webrtcOptions, state) {
+* Initialise the Call Client application.
+* @param {object}    callOptions  the webrtc options.
+* @param {object}    state  any state data.
+*/
+export function initialiseCallClient(callOptions, state) {
     try {
-        // start the webRTC interface.
-        startWebRTC(webrtcOptions, callbackStartWebRTC, state);
+        // start the Call Client interface.
+        startCallClient(callOptions, callbackStartCallClient, state);
     }
     catch (e) {
-        util.logger("Error", "Could not initialise the WebRTC interface", e);
+        util.logger("Error", "Could not initialise the Call Client interface", e);
     }
 }
 /**
- * Deinitialize the WebRTC application.
- * @param {WebRtc}    webRtc the implementation.
+ * Deinitialize the Call Client application.
+ * @param {CallClient}    callClient the implementation.
  */
-export function deinitializeWebRTC(webRtc) {
+export function deinitializeCallClient(callClient) {
     try {
-        // stop the webRTC interface.
-        stopWebRTC(webRtc);
+        // stop the CallClient interface.
+        stopCallClient(callClient);
     }
     catch (e) {
-        util.logger("Error", "Could not deinitialize the WebRTC interface", e);
+        util.logger("Error", "Could not deinitialize the Call Client interface", e);
     }
 }
 /**
- * callback start WebRTC application.
- * @param {WebRtc}    webRtc the implementation.
- */
-function callbackStartWebRTC(webRtc, state) {
+* callback start Call Client application.
+* @param {CallClient}    callClient the implementation.
+*/
+function callbackStartCallClient(callClient, state) {
     // assign events
-    webRtc.onConnectionOpen((event) => mainApp.onConnectionOpen(event));
-    webRtc.onConnectionClose((event) => mainApp.onConnectionClose(event));
-    webRtc.onConnectionError((event) => mainApp.onConnectionError(event));
-    webRtc.onSignalError((event) => mainApp.onSignalError(event));
-    webRtc.onSignalApplications((event) => mainApp.onSignalApplications(event));
-    webRtc.onSignalUniques((event) => mainApp.onSignalUniques(event));
-    webRtc.onSignalGroups((event) => mainApp.onSignalGroups(event));
-    webRtc.onSignalSettings((event) => mainApp.onSignalSettings(event));
-    webRtc.onSignalAvailable((event) => mainApp.onSignalAvailable(event));
-    webRtc.onSignalSelfAvailable((event) => mainApp.onSignalSelfAvailable(event));
-    webRtc.onSignalMessage((event) => mainApp.onSignalMessage(event));
-    webRtc.onSignalState((event) => mainApp.onSignalState(event));
-    webRtc.onSignalDetails((event) => mainApp.onSignalDetails(event));
-    webRtc.onSignalNoAnswer((event) => mainApp.onSignalNoAnswer(event));
-    webRtc.onSignalEndCall((event) => mainApp.onSignalEndCall(event));
-    webRtc.onSignalTyping((event) => mainApp.onSignalTyping(event));
-    webRtc.onSignalOffer((event) => mainApp.onSignalOffer(event));
-    webRtc.onSignalAnswer((event) => mainApp.onSignalAnswer(event));
-    webRtc.onSignalJoinConferenceOffer((event) => mainApp.onSignalJoinConferenceOffer(event));
-    webRtc.onSignalJoinConferenceAnswer((event) => mainApp.onSignalJoinConferenceAnswer(event));
-    webRtc.onSignalFileOffer((event) => mainApp.onSignalFileOffer(event));
-    webRtc.onSignalFileAnswer((event) => mainApp.onSignalFileAnswer(event));
-    webRtc.onSignalIceCandidate((event) => mainApp.onSignalIceCandidate(event));
-    webRtc.onSignalSDP((event) => mainApp.onSignalSDP(event));
-    webRtc.onContactAddStream((event) => mainApp.onContactAddStream(event));
-    webRtc.onContactSentSize((event) => mainApp.onContactSentSize(event));
-    webRtc.onContactSentComplete((event) => mainApp.onContactSentComplete(event));
-    webRtc.onContactSentMessage((event) => mainApp.onContactSentMessage(event));
-    webRtc.onContactClose((event) => mainApp.onContactClose(event));
-    webRtc.onContactSessionError((event) => mainApp.onContactSessionError(event));
-    webRtc.onContactReceiveSize((event) => mainApp.onContactReceiveSize(event));
-    webRtc.onContactReceiveComplete((event) => mainApp.onContactReceiveComplete(event));
-    webRtc.onContactReceiveClose((event) => mainApp.onContactReceiveClose(event));
-    webRtc.onContactReceiveError((event) => mainApp.onContactReceiveError(event));
-    webRtc.onContactReceiveOpen((event) => mainApp.onContactReceiveOpen(event));
-    webRtc.onContactRemoveStream((event) => mainApp.onContactRemoveStream(event));
-    webRtc.onContactICEStateChange((event) => mainApp.onContactICEStateChange(event));
-    webRtc.onContactICECandidateError((event) => mainApp.onContactICECandidateError(event));
-    webRtc.onContactICECandidate((event) => mainApp.onContactICECandidate(event));
-    webRtc.onContactSignalingStateChange((event) => mainApp.onContactSignalingStateChange(event));
-    webRtc.onContactNegotiationNeeded((event) => mainApp.onContactNegotiationNeeded(event));
-    webRtc.onContactRecordingData((event) => mainApp.onContactRecordingData(event));
-    webRtc.onContactRecordingStopped((event) => mainApp.onContactRecordingStopped(event));
-    webRtc.onRecordingData((event) => mainApp.onRecordingData(event));
-    webRtc.onRecordingStopped((event) => mainApp.onRecordingStopped(event));
-    webRtc.onAttachSinkId((event) => mainApp.onAttachSinkId(event));
+    callClient.webRtcImp.onConnectionOpen((event) => mainApp.onConnectionOpen(event));
+    callClient.webRtcImp.onConnectionClose((event) => mainApp.onConnectionClose(event));
+    callClient.webRtcImp.onConnectionError((event) => mainApp.onConnectionError(event));
+    callClient.webRtcImp.onSignalError((event) => mainApp.onSignalError(event));
+    callClient.webRtcImp.onSignalApplications((event) => mainApp.onSignalApplications(event));
+    callClient.webRtcImp.onSignalUniques((event) => mainApp.onSignalUniques(event));
+    callClient.webRtcImp.onSignalGroups((event) => mainApp.onSignalGroups(event));
+    callClient.webRtcImp.onSignalSettings((event) => mainApp.onSignalSettings(event));
+    callClient.webRtcImp.onSignalAvailable((event) => mainApp.onSignalAvailable(event));
+    callClient.webRtcImp.onSignalSelfAvailable((event) => mainApp.onSignalSelfAvailable(event));
+    callClient.webRtcImp.onSignalMessage((event) => mainApp.onSignalMessage(event));
+    callClient.webRtcImp.onSignalState((event) => mainApp.onSignalState(event));
+    callClient.webRtcImp.onSignalDetails((event) => mainApp.onSignalDetails(event));
+    callClient.webRtcImp.onSignalNoAnswer((event) => mainApp.onSignalNoAnswer(event));
+    callClient.webRtcImp.onSignalEndCall((event) => mainApp.onSignalEndCall(event));
+    callClient.webRtcImp.onSignalTyping((event) => mainApp.onSignalTyping(event));
+    callClient.webRtcImp.onSignalOffer((event) => mainApp.onSignalOffer(event));
+    callClient.webRtcImp.onSignalAnswer((event) => mainApp.onSignalAnswer(event));
+    callClient.webRtcImp.onSignalJoinConferenceOffer((event) => mainApp.onSignalJoinConferenceOffer(event));
+    callClient.webRtcImp.onSignalJoinConferenceAnswer((event) => mainApp.onSignalJoinConferenceAnswer(event));
+    callClient.webRtcImp.onSignalFileOffer((event) => mainApp.onSignalFileOffer(event));
+    callClient.webRtcImp.onSignalFileAnswer((event) => mainApp.onSignalFileAnswer(event));
+    callClient.webRtcImp.onSignalIceCandidate((event) => mainApp.onSignalIceCandidate(event));
+    callClient.webRtcImp.onSignalSDP((event) => mainApp.onSignalSDP(event));
+    callClient.webRtcImp.onContactAddStream((event) => mainApp.onContactAddStream(event));
+    callClient.webRtcImp.onContactSentSize((event) => mainApp.onContactSentSize(event));
+    callClient.webRtcImp.onContactSentComplete((event) => mainApp.onContactSentComplete(event));
+    callClient.webRtcImp.onContactSentMessage((event) => mainApp.onContactSentMessage(event));
+    callClient.webRtcImp.onContactClose((event) => mainApp.onContactClose(event));
+    callClient.webRtcImp.onContactSessionError((event) => mainApp.onContactSessionError(event));
+    callClient.webRtcImp.onContactReceiveSize((event) => mainApp.onContactReceiveSize(event));
+    callClient.webRtcImp.onContactReceiveComplete((event) => mainApp.onContactReceiveComplete(event));
+    callClient.webRtcImp.onContactReceiveClose((event) => mainApp.onContactReceiveClose(event));
+    callClient.webRtcImp.onContactReceiveError((event) => mainApp.onContactReceiveError(event));
+    callClient.webRtcImp.onContactReceiveOpen((event) => mainApp.onContactReceiveOpen(event));
+    callClient.webRtcImp.onContactRemoveStream((event) => mainApp.onContactRemoveStream(event));
+    callClient.webRtcImp.onContactICEStateChange((event) => mainApp.onContactICEStateChange(event));
+    callClient.webRtcImp.onContactICECandidateError((event) => mainApp.onContactICECandidateError(event));
+    callClient.webRtcImp.onContactICECandidate((event) => mainApp.onContactICECandidate(event));
+    callClient.webRtcImp.onContactSignalingStateChange((event) => mainApp.onContactSignalingStateChange(event));
+    callClient.webRtcImp.onContactNegotiationNeeded((event) => mainApp.onContactNegotiationNeeded(event));
+    callClient.webRtcImp.onContactRecordingData((event) => mainApp.onContactRecordingData(event));
+    callClient.webRtcImp.onContactRecordingStopped((event) => mainApp.onContactRecordingStopped(event));
+    callClient.webRtcImp.onRecordingData((event) => mainApp.onRecordingData(event));
+    callClient.webRtcImp.onRecordingStopped((event) => mainApp.onRecordingStopped(event));
+    callClient.webRtcImp.onAttachSinkId((event) => mainApp.onAttachSinkId(event));
     // Initialise the app.
-    mainApp.initialiseApplication(webRtc, state);
+    mainApp.initialiseApplication(callClient, callClient.webRtcImp, state);
 }

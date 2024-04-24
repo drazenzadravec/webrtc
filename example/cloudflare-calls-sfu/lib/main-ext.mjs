@@ -1,12 +1,15 @@
 import * as util from '../mod/common.mjs';
 /**
  * Initialise the application.
+ * @param {CallClient}    callClient the implementation.
  * @param {WebRtc}    webRtc the implementation.
  * @param {object}    accessOptions  the access options.
  */
-export function initialiseApplication(webRtc, accessOptions) {
+export function initialiseApplication(callClient, webRtc, accessOptions) {
+    // create this local contact.
+    let contact = webRtc.webrtc.createContact(uniqueID, applicationID);
     // init app.
-    initialiseApplicationEx(webRtc, accessOptions);
+    initialiseApplicationEx(callClient, webRtc, accessOptions);
     // Get audio and video source devices.
     getSourceDevices(webRtc);
 }
@@ -17,22 +20,467 @@ export function initialiseApplication(webRtc, accessOptions) {
  */
 export function assignContact(uniqueId, applicationId) {
     uniqueID = uniqueId;
-    conferenceAppID = applicationId;
+    applicationID = applicationId;
 }
 /**
+ * onConnectionOpen
+ * @param arg   the current event aruments.
+ */
+export function onConnectionOpen(arg) {
+    alertTextElement.innerHTML = "Connection has opened.";
+}
+/**
+ * onConnectionClose
+ * @param arg   the current event aruments.
+ */
+export function onConnectionClose(arg) {
+    alertTextElement.innerHTML = "Connection has closed.";
+}
+/**
+ * onConnectionError
+ * @param arg   the current event aruments.
+ */
+export function onConnectionError(arg) {
+    alertTextElement.innerHTML = "Connection error: " + arg.data;
+}
+/**
+ * onSignalError
+ * @param arg   the current event aruments.
+ */
+export function onSignalError(arg) {
+    alertTextElement.innerHTML = "Error encountered from signalling: " + arg.error;
+}
+/**
+* onSignalApplications
+* @param arg   the current event aruments.
+*/
+export function onSignalApplications(arg) {
+    // Clear.
+    alertTextList.innerHTML = "<b>ApplicationID</b><br>";
+    var existsText = alertTextList.innerHTML;
+    // For each item.
+    for (var u in arg.list) {
+        // Add item.
+        alertTextList.innerHTML = existsText + arg.list[u].application + "<br>";
+        existsText = alertTextList.innerHTML;
+    }
+}
+/**
+ * onSignalUniques
+ * @param arg   the current event aruments.
+ */
+export function onSignalUniques(arg) {
+    // Clear.
+    alertTextList.innerHTML = "<b>UniqueID, ApplicationID</b><br>";
+    var existsText = alertTextList.innerHTML;
+    // For each item.
+    for (var u in arg.list) {
+        // Add item.
+        alertTextList.innerHTML = existsText + arg.list[u].unique + ", " + arg.list[u].application + "<br>";
+        existsText = alertTextList.innerHTML;
+    }
+}
+/**
+ * onSignalGroups
+ * @param arg   the current event aruments.
+ */
+export function onSignalGroups(arg) {
+    // Clear.
+    alertTextList.innerHTML = "<b>UniqueID</b><br>";
+    var existsText = alertTextList.innerHTML;
+    // For each item.
+    for (var u in arg.list) {
+        // Add item.
+        alertTextList.innerHTML = existsText + arg.list[u].unique + "<br>";
+        existsText = alertTextList.innerHTML;
+    }
+}
+/**
+ * onSignalAvailable
+ * @param arg   the current event aruments.
+ */
+export function onSignalAvailable(arg) {
+    var contact = arg.contact;
+    var uniqueid = contact.getUniqueID();
+    var applicationid = contact.getApplicationID();
+    // If available.
+    if (arg.available === true) {
+        // the contact sent a message indicating that
+        // the contact is ready to receive video and audio data.
+        // you can start adding media tracks here.
+        alertTextElement.innerHTML =
+            "The contact is ready: uniqueID: " + uniqueid + ", applicationID: " + applicationid;
+    }
+}
+/**
+ * onSignalSettings
+ * @param arg   the current event aruments.
+ */
+export function onSignalSettings(arg) {
+    alertTextElement.innerHTML = "Client settings have been applied: " + arg.setting;
+}
+/**
+* onSignalSelfAvailable
+* @param arg   the current event aruments.
+*/
+export function onSignalSelfAvailable(arg) {
+    alertTextBackElement.innerHTML = "The contact is available: " + arg.available;
+}
+/**
+* onSignalMessage
+* @param arg   the current event aruments.
+*/
+export function onSignalMessage(arg) {
+    var contact = arg.contact;
+    var uniqueID = contact.getUniqueID();
+    var applicationID = contact.getApplicationID();
+    // Show message.
+    var existsText = alertTextMessageElement.innerHTML;
+    alertTextMessageElement.innerHTML =
+        existsText + "<b>" + uniqueID + " from " + applicationID + " wrote:</b> " + arg.message + "<br>";
+}
+/**
+ * onSignalState
+ * @param arg   the current event aruments.
+ */
+export function onSignalState(arg) {
+    var contact = arg.contact;
+    var uniqueID = contact.getUniqueID();
+    var applicationID = contact.getApplicationID();
+    var state = arg.state;
+    // Get the contact video index.
+    var peerIndex = conferenceContactList.indexOf(uniqueID);
+    var remoteState = conferenceRemoteStateElement[peerIndex];
+    // Set the contact state.
+    remoteState.innerHTML = state;
+}
+/**
+ * onSignalDetails
+ * @param arg   the current event aruments.
+ */
+export async function onSignalDetails(arg) {
+    var contact = arg.contact;
+    var uniqueID = contact.getUniqueID();
+    var applicationID = contact.getApplicationID();
+    // Get the contact video index.
+    var peerIndex = conferenceContactList.indexOf(uniqueID);
+    //TODO assign the details.
+    let details = JSON.parse(arg.details);
+    if (details.remoteTracks) {
+        // got remote tracks from contact
+        // add remote tracks to contact
+        let webrtc = arg.rtc;
+        let callClient = webrtc.parent.parent;
+        let result = await callClient.initContactRemote(uniqueID, applicationID, details.tracks, details);
+        //let result = await callClient.addTrackRemote(details.sessionID,
+        //    contactUniqueIDElement.value, contactApplicationIDElement.value, details.tracks);
+    }
+}
+/**
+ * onSignalNoAnswer
+ * @param arg   the current event aruments.
+ */
+export function onSignalNoAnswer(arg) {
+    var contact = arg.contact;
+    var uniqueID = contact.getUniqueID();
+    var applicationID = contact.getApplicationID();
+    // Show did not answer.
+    alertTextElement.innerHTML = uniqueID + " from " + applicationID + " is not available.";
+}
+/**
+ * onSignalEndCall
+ * @param arg   the current event aruments.
+ */
+export function onSignalEndCall(arg) {
+    var contact = arg.contact;
+    var uniqueID = contact.getUniqueID();
+    var applicationID = contact.getApplicationID();
+    // Remove the remote stream.
+    contact.closeStream();
+    // Remote contact ended the call.
+    alertTextElement.innerHTML = uniqueID + " from " + applicationID + " ended the call.";
+}
+/**
+ * onSignalTyping
+ * @param arg   the current event aruments.
+ */
+export function onSignalTyping(arg) {
+    var contact = arg.contact;
+    var uniqueID = contact.getUniqueID();
+    var applicationID = contact.getApplicationID();
+    // If contact typing a message.
+    if (arg.typing && arg.typing === true) {
+        alertTextBackElement.innerHTML = uniqueID + " from " + applicationID + " is typing a message.";
+    }
+    else {
+        alertTextBackElement.innerHTML = uniqueID + " from " + applicationID + " has stopped typing.";
+    }
+}
+/**
+ * onSignalOffer
+ * @param arg   the current event aruments.
+ */
+export function onSignalOffer(arg) { }
+/**
+ * onSignalAnswer
+ * @param arg   the current event aruments.
+ */
+export function onSignalAnswer(arg) {
+    // Call answered for the contact call.
+    var contact = arg.contact;
+    var uniqueID = contact.getUniqueID();
+    var applicationID = contact.getApplicationID();
+    // Remote client answered the call.
+    alertTextElement.innerHTML = uniqueID + " from " + applicationID + " accepted the call.";
+}
+/**
+* onSignalJoinConferenceOffer
+* @param arg   the current event aruments.
+*/
+export function onSignalJoinConferenceOffer(arg) { }
+/**
+ * onSignalJoinConferenceAnswer
+ * @param arg   the current event aruments.
+ */
+export function onSignalJoinConferenceAnswer(arg) {
+    // Call answered for the contact call.
+    var contact = arg.contact;
+    var uniqueID = contact.getUniqueID();
+    var applicationID = contact.getApplicationID();
+    // Remote client answered the call.
+    alertTextElement.innerHTML = uniqueID + " from " + applicationID + " has joined the conference.";
+}
+/**
+ * onSignalFileOffer
+ * @param arg   the current event aruments.
+ */
+export function onSignalFileOffer(arg) {
+    // Answer the contact file call.
+    var contact = arg.contact;
+    answerFileTransfer(contact, arg.name, arg.size);
+}
+/**
+ * onSignalFileAnswer
+ * @param arg   the current event aruments.
+ */
+export function onSignalFileAnswer(arg) {
+    // Call answered for the contact file call.
+    var contact = arg.contact;
+    var uniqueID = contact.getUniqueID();
+    var applicationID = contact.getApplicationID();
+    // Remote client answered the call.
+    alertTextElement.innerHTML = uniqueID + " from " + applicationID + " accepted the file transfer.";
+}
+/**
+ * onSignalIceCandidate
+ * @param arg   the current event aruments.
+ */
+export function onSignalIceCandidate(arg) { }
+/**
+ * onSignalSDP
+ * @param arg   the current event aruments.
+ */
+export function onSignalSDP(arg) {
+    var contact = arg.contact;
+    // Set the remote description.
+    contact.setRemoteDescription(arg.sdp);
+}
+/**
+ * onContactAddStream
+ * @param arg   the current event aruments.
+ */
+export function onContactAddStream(arg) {
+    // Assign this contact remote stream
+    // to the remote video element.
+    var contact = arg.contact;
+    // Get contact list.
+    var contacts = isContactInList(contact);
+    if (contacts.length <= 0) {
+        // Add to list.
+        conferenceContactList.push(contact.uniqueID);
+        // Create the conference contacts.
+        createNewContact(contact.uniqueID, contact.applicationID);
+    }
+    // Get the contact video index.
+    var peerIndex = conferenceContactList.indexOf(contact.uniqueID);
+    var remoteVideo = conferenceRemoteVideoElement[peerIndex];
+    // get tracks.
+    let tracks = contact.getTracks();
+    if (tracks !== null && tracks !== undefined) {
+        // add tracks
+        if (arg.add.track) {
+            if (tracks.length > 0) {
+                contact.addTrackStreamToRemoteVideoElement(remoteVideo, arg.add.track);
+            }
+        }
+        else if (arg.add.streams) {
+            contact.setAllRemoteStreamToVideoElement(remoteVideo, arg.add.streams);
+        }
+    }
+    else if (arg.add.streams) {
+        contact.setRemoteStreamToVideoElement(remoteVideo, arg.add.streams);
+    }
+}
+/**
+* onContactReceiveSize
+* @param arg   the current event aruments.
+*/
+export function onContactReceiveSize(arg) {
+    // Contact details.
+    var contact = arg.contact;
+    // Set the current file progress.
+    sendReceiveProgress.value = arg.size;
+}
+/**
+ * onContactReceiveComplete
+ * @param arg   the current event aruments.
+ */
+export function onContactReceiveComplete(arg) {
+    // Contact details.
+    var contact = arg.contact;
+    // Contact receive file complete.
+    receiveFileComplete(contact, arg.buffer);
+}
+/**
+ * onContactReceiveClose
+ * @param arg   the current event aruments.
+ */
+export function onContactReceiveClose(arg) { }
+/**
+ * onContactReceiveError
+ * @param arg   the current event aruments.
+ */
+export function onContactReceiveError(arg) { }
+/**
+ * onContactReceiveOpen
+ * @param arg   the current event aruments.
+ */
+export function onContactReceiveOpen(arg) { }
+/**
+ * onContactRemoveStream
+ * @param arg   the current event aruments.
+ */
+export function onContactRemoveStream(arg) { }
+/**
+ * onContactSentSize
+ * @param arg   the current event aruments.
+ */
+export function onContactSentSize(arg) {
+    // Contact details.
+    var contact = arg.contact;
+    // Set the current file progress.
+    sendReceiveProgress.value = arg.size;
+}
+/**
+ * onContactSentComplete
+ * @param arg   the current event aruments.
+ */
+export function onContactSentComplete(arg) {
+    // Contact details.
+    var contact = arg.contact;
+    // Upload a completed.
+    statusMessage.textContent = "File upload has completed";
+}
+/**
+ * onContactSentMessage
+ * @param arg   the current event aruments.
+ */
+export function onContactSentMessage(arg) { }
+/**
+ * onContactClose
+ * @param arg   the current event aruments.
+ */
+export function onContactClose(arg) { }
+/**
+ * onContactICEStateChange
+ * @param arg   the current event aruments.
+ */
+export function onContactICEStateChange(arg) { }
+/**
+* onContactICECandidateError
+* @param arg   the current event aruments.
+*/
+export function onContactICECandidateError(arg) { }
+/**
+ * onContactICECandidate
+ * @param arg   the current event aruments.
+ */
+export function onContactICECandidate(arg) { }
+/**
+ * onContactSignalingStateChange
+ * @param arg   the current event aruments.
+ */
+export function onContactSignalingStateChange(arg) { }
+/**
+ * onContactNegotiationNeeded
+ * @param arg   the current event aruments.
+ */
+export function onContactNegotiationNeeded(arg) {
+}
+/**
+ * onContactSessionError
+ * @param arg   the current event aruments.
+ */
+export function onContactSessionError(arg) { }
+/**
+ * onContactRecordingData
+ * @param arg   the current event aruments.
+ */
+export function onContactRecordingData(arg) { }
+/**
+ * onContactRecordingStopped
+ * @param arg   the current event aruments.
+ */
+export function onContactRecordingStopped(arg) { }
+/**
+ * onRecordingData
+ * @param arg   the current event aruments.
+ */
+export function onRecordingData(arg) {
+    // If recording buffer.
+    if (recordedBlobs) {
+        recordedBlobs.push(arg.data);
+    }
+}
+/**
+ * onRecordingStopped
+ * @param arg   the current event aruments.
+ */
+export function onRecordingStopped(arg) {
+    // Create a Blob from the recorded data.
+    var blob = new Blob(recordedBlobs, { type: 'video/webm' });
+    var url = window.URL.createObjectURL(blob);
+    // Create a new a element.
+    var a = document.createElement('a');
+    a.style.display = 'none';
+    a.href = url;
+    a.download = 'recordedMedia.webm';
+    // Add the a element.
+    document.body.appendChild(a);
+    a.click();
+    // Set download timer.
+    setTimeout(function () {
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+    }, 100);
+}
+/**
+ * onAttachSinkId
+ * @param arg   the current event aruments.
+ */
+export function onAttachSinkId(arg) { }
+/**
  * Initialise the application.
+ * @param {CallClient}    callClient the implementation.
  * @param {WebRtc}    webRtc the implementation.
  * @param {object}    accessOptions  the access options.
  */
-function initialiseApplicationEx(webRtc, accessOptions) {
+function initialiseApplicationEx(callClient, webRtc, accessOptions) {
     // The container div.
     containerDivElement = document.getElementById("container");
     conatinerDivRemoteVideoShow = document.getElementById("remoteVideoShow");
-    // Assign the common conference application ID.
-    conferenceApplicationID = conferenceAppID;
     // Get the client details.
     uniqueIDElement = document.getElementById("uniqueID");
-    uniqueIDElement.value = uniqueID;
     applicationIDElement = document.getElementById("applicationID");
     availableElement = document.getElementById("available");
     broadcastElement = document.getElementById("broadcast");
@@ -45,25 +493,6 @@ function initialiseApplicationEx(webRtc, accessOptions) {
     contactApplicationIDListButton = document.getElementById("contactApplicationIDListButton");
     contactGroupListButton = document.getElementById("contactGroupListButton");
     alertTextList = document.getElementById("alertTextList");
-    // Assign the conference ID.
-    applicationIDElement.value = conferenceApplicationID;
-    contactApplicationIDElement.value = conferenceApplicationID;
-    // Assign the list of possible conference contacts.
-    if (conferenceContactList) {
-        conferenceContactList.push("fred");
-        conferenceContactList.push("david");
-        conferenceContactList.push("jack");
-        conferenceContactList.push("taylor");
-        conferenceContactList.push("holly");
-        conferenceContactList.push("guest");
-    }
-    // For each conference contact.
-    conferenceContactList.forEach(function (uniqueID) {
-        // Create the conference contacts.
-        createConferenceContact(webRtc, uniqueID, conferenceApplicationID);
-        // Create a new contact.
-        createNewContact(uniqueID, conferenceApplicationID);
-    });
     // Assign the local video element.
     localVideoElement = document.getElementById("localVideo");
     alertTextElement = document.getElementById("alertText");
@@ -75,8 +504,9 @@ function initialiseApplicationEx(webRtc, accessOptions) {
     stopCamButton = document.getElementById("stopCamButton");
     toggleMuteAudioButton = document.getElementById("toggleMuteAudioButton");
     toggleMuteAllRemoteButton = document.getElementById("muteAllRemote");
-    videoCallButton = document.getElementById("videoCallButton");
-    endCallButton = document.getElementById("endCallButton");
+    videoCloudflareCallButton = document.getElementById("videoCloudflareCallButton");
+    contactCloudflareCallButton = document.getElementById("contactCloudflareCallButton");
+    endCloudflareCallButton = document.getElementById("endCloudflareCallButton");
     changeSettingsButton = document.getElementById("changeSettingsButton");
     contactAvailableButton = document.getElementById("contactAvailableButton");
     contactSendMessageButton = document.getElementById("contactSendMessageButton");
@@ -131,12 +561,16 @@ function initialiseApplicationEx(webRtc, accessOptions) {
         stopRecording(webRtc);
     });
     // Start a new call.
-    videoCallButton.addEventListener("click", (e) => {
-        makeCall(webRtc);
+    videoCloudflareCallButton.addEventListener("click", (e) => {
+        makeCloudflareCall(webRtc);
+    });
+    // Start a new call.
+    contactCloudflareCallButton.addEventListener("click", (e) => {
+        remoteTrackCloudflareCall(webRtc);
     });
     // Add an end call handler.
-    endCallButton.addEventListener("click", (e) => {
-        endCall(webRtc);
+    endCloudflareCallButton.addEventListener("click", (e) => {
+        endCloudflareCall(webRtc);
     });
     // Add a change settings handler.
     clientStateButton.addEventListener("click", (e) => {
@@ -180,9 +614,31 @@ function initialiseApplicationEx(webRtc, accessOptions) {
     // Volume control handlers
     localVolumeControlElement.addEventListener('change', setVolumeLocal);
     localVolumeControlElement.addEventListener('input', setVolumeLocal);
+    // assign ids.
+    uniqueIDElement.value = uniqueID;
+    applicationIDElement.value = applicationID;
+    contactUniqueIDElement.value = uniqueID;
+    contactApplicationIDElement.value = applicationID;
+    conferenceApplicationID = applicationID;
     // Set the local video volume to 0.
     localVolumeControlElement.value = 0;
     localVideoElement.volume = 0;
+    // Assign the list of possible conference contacts.
+    if (conferenceContactList) {
+        conferenceContactList.push("fred");
+        conferenceContactList.push("david");
+        conferenceContactList.push("jack");
+        conferenceContactList.push("taylor");
+        conferenceContactList.push("holly");
+        conferenceContactList.push("guest");
+    }
+    // For each conference contact.
+    conferenceContactList.forEach(function (uniqueID) {
+        // Create the conference contacts.
+        createConferenceContact(webRtc, uniqueID, applicationID);
+        // Create a new contact.
+        createNewContact(uniqueID, applicationID);
+    });
 }
 /**
  * Get audio and video source devices.
@@ -233,565 +689,6 @@ function getSourceDevices(webRtc) {
             select.value = values[selectorIndex];
         }
     });
-}
-/**
- * onConnectionOpen
- * @param arg   the current event aruments.
- */
-export function onConnectionOpen(arg) {
-    alertTextElement.innerHTML = "Connection has opened.";
-}
-/**
- * onConnectionClose
- * @param arg   the current event aruments.
- */
-export function onConnectionClose(arg) {
-    alertTextElement.innerHTML = "Connection has closed.";
-}
-/**
- * onConnectionError
- * @param arg   the current event aruments.
- */
-export function onConnectionError(arg) {
-    alertTextElement.innerHTML = "Connection error: " + arg.data;
-}
-/**
- * onSignalError
- * @param arg   the current event aruments.
- */
-export function onSignalError(arg) {
-    alertTextElement.innerHTML = "Error encountered from signalling: " + arg.error;
-}
-/**
- * onSignalSettings
- * @param arg   the current event aruments.
- */
-export function onSignalSettings(arg) {
-    alertTextElement.innerHTML = "Client settings have been applied: " + arg.setting;
-}
-/**
- * onSignalSelfAvailable
- * @param arg   the current event aruments.
- */
-export function onSignalSelfAvailable(arg) {
-    alertTextBackElement.innerHTML = "The contact is available: " + arg.available;
-}
-/**
- * onSignalApplications
- * @param arg   the current event aruments.
- */
-export function onSignalApplications(arg) {
-    // Clear.
-    alertTextList.innerHTML = "<b>ApplicationID</b><br>";
-    var existsText = alertTextList.innerHTML;
-    // For each item.
-    for (var u in arg.list) {
-        // Add item.
-        alertTextList.innerHTML = existsText + arg.list[u].application + "<br>";
-        existsText = alertTextList.innerHTML;
-    }
-}
-/**
- * onSignalUniques
- * @param arg   the current event aruments.
- */
-export function onSignalUniques(arg) {
-    // Clear.
-    alertTextList.innerHTML = "<b>UniqueID</b><br>";
-    var existsText = alertTextList.innerHTML;
-    // For each item.
-    for (var u in arg.list) {
-        // Add item.
-        alertTextList.innerHTML = existsText + arg.list[u].unique + "<br>";
-        existsText = alertTextList.innerHTML;
-    }
-}
-/**
- * onSignalGroups
- * @param arg   the current event aruments.
- */
-export function onSignalGroups(arg) {
-    // Clear.
-    alertTextList.innerHTML = "<b>UniqueID, ApplicationID</b><br>";
-    var existsText = alertTextList.innerHTML;
-    // For each item.
-    for (var u in arg.list) {
-        // Add item.
-        alertTextList.innerHTML = existsText + arg.list[u].unique + ", " + arg.list[u].application + "<br>";
-        existsText = alertTextList.innerHTML;
-    }
-}
-/**
- * onSignalAvailable
- * @param arg   the current event aruments.
- */
-export function onSignalAvailable(arg) {
-    var contact = arg.contact;
-    var uniqueID = contact.getUniqueID();
-    var applicationID = contact.getApplicationID();
-    // If available.
-    if (arg.available === true) {
-        let webrtc = arg.rtc;
-        // The contact has sent a message
-        // to the signalling server asking
-        // if this client is available.
-        // Add the local video stream to the contact stream.
-        var localStream = webrtc.webrtcadapter.getStream();
-        contact.addStreamTracks(localStream);
-        // Create the call offer and send the call request.
-        contact.sendJoinConferenceOfferRequest();
-    }
-}
-/**
- * onSignalMessage
- * @param arg   the current event aruments.
- */
-export function onSignalMessage(arg) {
-    var contact = arg.contact;
-    var uniqueID = contact.getUniqueID();
-    var applicationID = contact.getApplicationID();
-    // Show message.
-    var existsText = alertTextMessageElement.innerHTML;
-    alertTextMessageElement.innerHTML = existsText + "<b>" + uniqueID + " from " + applicationID + " wrote:</b> " + arg.message + "<br>";
-}
-/**
- * onSignalState
- * @param arg   the current event aruments.
- */
-export function onSignalState(arg) {
-    var contact = arg.contact;
-    var uniqueID = contact.getUniqueID();
-    var applicationID = contact.getApplicationID();
-    var state = arg.state;
-    // Get the contact video index.
-    var peerIndex = conferenceContactList.indexOf(uniqueID);
-    var remoteState = conferenceRemoteStateElement[peerIndex];
-    // Set the contact state.
-    remoteState.innerHTML = state;
-}
-/**
- * onSignalDetails
- * @param arg   the current event aruments.
- */
-export function onSignalDetails(arg) {
-    var contact = arg.contact;
-    var uniqueID = contact.getUniqueID();
-    var applicationID = contact.getApplicationID();
-    var details = arg.details;
-    // Get the contact video index.
-    var peerIndex = conferenceContactList.indexOf(uniqueID);
-    //TODO assign the details.
-}
-/**
- * onSignalNoAnswer
- * @param arg   the current event aruments.
- */
-export function onSignalNoAnswer(arg) {
-    var contact = arg.contact;
-    var uniqueID = contact.getUniqueID();
-    var applicationID = contact.getApplicationID();
-    // Show did not answer.
-    alertTextElement.innerHTML = uniqueID + " from " + applicationID + " is not available.";
-}
-/**
- * onSignalEndCall
- * @param arg   the current event aruments.
- */
-export function onSignalEndCall(arg) {
-    var contact = arg.contact;
-    var uniqueID = contact.getUniqueID();
-    var applicationID = contact.getApplicationID();
-    // Remove the remote stream.
-    contact.closeStream();
-    // Remote contact ended the call.
-    alertTextElement.innerHTML = uniqueID + " from " + applicationID + " ended the call.";
-}
-/**
- * onSignalTyping
- * @param arg   the current event aruments.
- */
-export function onSignalTyping(arg) {
-    var contact = arg.contact;
-    var uniqueID = contact.getUniqueID();
-    var applicationID = contact.getApplicationID();
-    // If contact typing a message.
-    if (arg.typing && arg.typing === true) {
-        alertTextBackElement.innerHTML = uniqueID + " from " + applicationID + " is typing a message.";
-    }
-    else {
-        alertTextBackElement.innerHTML = uniqueID + " from " + applicationID + " has stopped typing.";
-    }
-}
-/**
- * onSignalOffer
- * @param arg   the current event aruments.
- */
-export function onSignalOffer(arg) {
-    let webrtc = arg.rtc;
-    // Answer the contact call.
-    let contact = arg.contact;
-    answerCall(webrtc, contact);
-}
-/**
- * onSignalAnswer
- * @param arg   the current event aruments.
- */
-export function onSignalAnswer(arg) {
-    // Call answered for the contact call.
-    var contact = arg.contact;
-    var uniqueID = contact.getUniqueID();
-    var applicationID = contact.getApplicationID();
-    // Remote client answered the call.
-    alertTextElement.innerHTML = uniqueID + " from " + applicationID + " accepted the call.";
-}
-/**
- * onSignalJoinConferenceOffer
- * @param arg   the current event aruments.
- */
-export function onSignalJoinConferenceOffer(arg) {
-    let webrtc = arg.rtc;
-    // Answer the contact call.
-    let contact = arg.contact;
-    answerJoinConference(webrtc, contact);
-}
-/**
- * onSignalJoinConferenceAnswer
- * @param arg   the current event aruments.
- */
-export function onSignalJoinConferenceAnswer(arg) {
-    // Call answered for the contact call.
-    var contact = arg.contact;
-    var uniqueID = contact.getUniqueID();
-    var applicationID = contact.getApplicationID();
-    // Remote client answered the call.
-    alertTextElement.innerHTML = uniqueID + " from " + applicationID + " has joined the conference.";
-}
-/**
- * onSignalFileOffer
- * @param arg   the current event aruments.
- */
-export function onSignalFileOffer(arg) {
-    // Answer the contact file call.
-    var contact = arg.contact;
-    answerFileTransfer(contact, arg.name, arg.size);
-}
-/**
- * onSignalFileAnswer
- * @param arg   the current event aruments.
- */
-export function onSignalFileAnswer(arg) {
-    // Call answered for the contact file call.
-    var contact = arg.contact;
-    var uniqueID = contact.getUniqueID();
-    var applicationID = contact.getApplicationID();
-    // Remote client answered the call.
-    alertTextElement.innerHTML = uniqueID + " from " + applicationID + " accepted the file transfer.";
-}
-/**
- * onSignalIceCandidate
- * @param arg   the current event aruments.
- */
-export function onSignalIceCandidate(arg) {
-    var contact = arg.contact;
-    // Set the ICE candidate.
-    contact.addIceCandidate(arg.candidate);
-}
-/**
- * onSignalSDP
- * @param arg   the current event aruments.
- */
-export function onSignalSDP(arg) {
-    var contact = arg.contact;
-    // Set the remote description.
-    contact.setRemoteDescription(arg.sdp);
-}
-/**
- * onContactAddStream
- * @param arg   the current event aruments.
- */
-export function onContactAddStream(arg) {
-    // Assign this contact remote stream
-    // to the remote video element.
-    var contact = arg.contact;
-    var uniqueID = contact.getUniqueID();
-    var applicationID = contact.getApplicationID();
-    // Get contact list.
-    var contacts = isContactInList(contact);
-    if (contacts.length <= 0) {
-        // Add to list.
-        conferenceContactList.push(contact.uniqueID);
-        // Create the conference contacts.
-        createNewContact(contact.uniqueID, contact.applicationID);
-    }
-    // Get the contact video index.
-    var peerIndex = conferenceContactList.indexOf(uniqueID);
-    var remoteVideo = conferenceRemoteVideoElement[peerIndex];
-    // Set the stream to the video element.
-    if (arg.add.streams) {
-        contact.setRemoteStreamToVideoElement(remoteVideo, arg.add.streams);
-    }
-}
-/**
- * onContactReceiveSize
- * @param arg   the current event aruments.
- */
-export function onContactReceiveSize(arg) {
-    // Contact details.
-    var contact = arg.contact;
-    // Set the current file progress.
-    sendReceiveProgress.value = arg.size;
-}
-/**
- * onContactReceiveComplete
- * @param arg   the current event aruments.
- */
-export function onContactReceiveComplete(arg) {
-    // Contact details.
-    var contact = arg.contact;
-    // Contact receive file complete.
-    receiveFileComplete(contact, arg.buffer);
-}
-/**
- * onContactReceiveClose
- * @param arg   the current event aruments.
- */
-export function onContactReceiveClose(arg) {
-}
-/**
- * onContactReceiveError
- * @param arg   the current event aruments.
- */
-export function onContactReceiveError(arg) {
-}
-/**
- * onContactReceiveOpen
- * @param arg   the current event aruments.
- */
-export function onContactReceiveOpen(arg) {
-}
-/**
- * onContactRemoveStream
- * @param arg   the current event aruments.
- */
-export function onContactRemoveStream(arg) {
-}
-/**
- * onContactSentSize
- * @param arg   the current event aruments.
- */
-export function onContactSentSize(arg) {
-    // Contact details.
-    var contact = arg.contact;
-    // Set the current file progress.
-    sendReceiveProgress.value = arg.size;
-}
-/**
- * onContactSentComplete
- * @param arg   the current event aruments.
- */
-export function onContactSentComplete(arg) {
-    // Contact details.
-    var contact = arg.contact;
-    // Upload a completed.
-    statusMessage.textContent = "File upload has completed";
-}
-/**
- * onContactSentMessage
- * @param arg   the current event aruments.
- */
-export function onContactSentMessage(arg) {
-}
-/**
- * onContactClose
- * @param arg   the current event aruments.
- */
-export function onContactClose(arg) {
-}
-/**
- * onContactICEStateChange
- * @param arg   the current event aruments.
- */
-export function onContactICEStateChange(arg) {
-}
-/**
- * onContactICECandidateError
- * @param arg   the current event aruments.
- */
-export function onContactICECandidateError(arg) {
-}
-/**
- * onContactICECandidate
- * @param arg   the current event aruments.
- */
-export function onContactICECandidate(arg) {
-}
-/**
- * onContactSignalingStateChange
- * @param arg   the current event aruments.
- */
-export function onContactSignalingStateChange(arg) {
-}
-/**
- * onContactNegotiationNeeded
- * @param arg   the current event aruments.
- */
-export function onContactNegotiationNeeded(arg) {
-}
-/**
- * onContactSessionError
- * @param arg   the current event aruments.
- */
-export function onContactSessionError(arg) {
-}
-/**
- * onContactRecordingData
- * @param arg   the current event aruments.
- */
-export function onContactRecordingData(arg) {
-}
-/**
- * onContactRecordingStopped
- * @param arg   the current event aruments.
- */
-export function onContactRecordingStopped(arg) {
-}
-/**
- * onRecordingData
- * @param arg   the current event aruments.
- */
-export function onRecordingData(arg) {
-    // If recording buffer.
-    if (recordedBlobs) {
-        recordedBlobs.push(arg.data);
-    }
-}
-/**
- * onRecordingStopped
- * @param arg   the current event aruments.
- */
-export function onRecordingStopped(arg) {
-    // Create a Blob from the recorded data.
-    var blob = new Blob(recordedBlobs, { type: 'video/webm' });
-    var url = window.URL.createObjectURL(blob);
-    // Create a new a element.
-    var a = document.createElement('a');
-    a.style.display = 'none';
-    a.href = url;
-    a.download = 'recordedMedia.webm';
-    // Add the a element.
-    document.body.appendChild(a);
-    a.click();
-    // Set download timer.
-    setTimeout(function () {
-        document.body.removeChild(a);
-        window.URL.revokeObjectURL(url);
-    }, 100);
-}
-/**
- * onAttachSinkId
- * @param arg   the current event aruments.
- */
-export function onAttachSinkId(arg) {
-}
-/**
- * Create a new contact.
- *
- * @param {string}          uniqueID        The uniqueID of the contact.
- * @param {applicationID}   applicationID   The applicationID of the contact.
- */
-function createNewContact(uniqueID, applicationID) {
-    // Create video elements.
-    conferenceDialogVideoRemoteDiv.push(document.createElement("div"));
-    conferenceDialogVideoRemoteDiv[conferenceIndex].id = "dialogVideoRemote" + conferenceIndex;
-    conferenceResizableRemoteDiv.push(document.createElement("div"));
-    conferenceResizableRemoteDiv[conferenceIndex].id = "resizableRemote" + conferenceIndex;
-    conferenceRemoteVideoElement.push(document.createElement("video"));
-    conferenceRemoteVideoElement[conferenceIndex].id = "remoteVideo" + conferenceIndex;
-    conferenceRemoteVideoElement[conferenceIndex].autoplay = true;
-    conferenceRemoteVideoElement[conferenceIndex].playsInline = true;
-    conferenceRemoteVideoElement[conferenceIndex].controls = true;
-    conferenceRemoteVideoElement[conferenceIndex].width = "380";
-    conferenceRemoteVideoElement[conferenceIndex].height = "340";
-    conferenceResizableRemoteDiv[conferenceIndex].appendChild(conferenceRemoteVideoElement[conferenceIndex]);
-    conferenceDialogVideoRemoteDiv[conferenceIndex].appendChild(conferenceResizableRemoteDiv[conferenceIndex]);
-    containerDivElement.appendChild(conferenceDialogVideoRemoteDiv[conferenceIndex]);
-    conferenceRemoteShowElement.push(document.createElement("input"));
-    conferenceRemoteShowElement[conferenceIndex].id = "videoRemoteShow" + conferenceIndex;
-    conferenceRemoteShowElement[conferenceIndex].type = "button";
-    conferenceRemoteShowElement[conferenceIndex].value = uniqueID;
-    conferenceRemoteShowElement[conferenceIndex].className = "buttonContact ui-button ui-corner-all ui-widget";
-    conferenceRemoteStateElement.push(document.createElement("div"));
-    conferenceRemoteStateElement[conferenceIndex].id = "remoteState" + conferenceIndex;
-    conferenceRemoteStateElement[conferenceIndex].innerHTML = "Unknown";
-    conferenceRemoteStateElement[conferenceIndex].className = "remoteContactsStateClass";
-    conferenceRemoteVolumeElement.push(document.createElement("input"));
-    conferenceRemoteVolumeElement[conferenceIndex].id = "remoteVolume" + conferenceIndex;
-    conferenceRemoteVolumeElement[conferenceIndex].type = "range";
-    conferenceRemoteVolumeElement[conferenceIndex].min = "0";
-    conferenceRemoteVolumeElement[conferenceIndex].max = "100";
-    conferenceRemoteVolumeElement[conferenceIndex].step = "1";
-    conferenceRemoteVolumeElement[conferenceIndex].innerHTML = uniqueID;
-    conferenceRemoteVolumeElement[conferenceIndex].className = "remoteContactsClass";
-    conferenceRemoteVolumeElement[conferenceIndex].addEventListener('change', setVolumeRemote);
-    conferenceRemoteVolumeElement[conferenceIndex].addEventListener('input', setVolumeRemote);
-    conferenceRemoteDiv.push(document.createElement("div"));
-    conferenceRemoteDiv[conferenceIndex].id = "remoteDisplay" + conferenceIndex;
-    conferenceRemoteDiv[conferenceIndex].className = "contactList";
-    conferenceRemoteDiv[conferenceIndex].appendChild(conferenceRemoteShowElement[conferenceIndex]);
-    conferenceRemoteDiv[conferenceIndex].appendChild(conferenceRemoteStateElement[conferenceIndex]);
-    conferenceRemoteDiv[conferenceIndex].appendChild(conferenceRemoteVolumeElement[conferenceIndex]);
-    conatinerDivRemoteVideoShow.appendChild(conferenceRemoteDiv[conferenceIndex]);
-    // Add remote video.
-    initRemoteVideo(conferenceResizableRemoteDiv[conferenceIndex].id, conferenceRemoteVideoElement[conferenceIndex].id, conferenceDialogVideoRemoteDiv[conferenceIndex].id, conferenceRemoteShowElement[conferenceIndex].id, uniqueID, applicationID);
-    // Increment the count.
-    conferenceIndex++;
-}
-/**
- * Start the video and audio.
- * @param {WebRtc}    webRtc the implementation.
- */
-function startLocalVideo(webRtc) {
-    // Add the local video element.
-    webRtc.webrtc.setLocalVideoElement(localVideoElement);
-    // if screen or window.
-    if (useScreenElement.checked || useWindowElement.checked) {
-        // use screen
-        if (useScreenElement.checked) {
-            // Capture constraints
-            let constraints = {
-                video: {
-                    displaySurface: 'screen'
-                },
-                audio: true
-            };
-            webRtc.webrtc.createStreamCaptureEx(constraints);
-        }
-        else {
-            // use window
-            if (useWindowElement.checked) {
-                // Capture constraints
-                let constraints = {
-                    video: {
-                        displaySurface: 'window'
-                    },
-                    audio: true
-                };
-                webRtc.webrtc.createStreamCaptureEx(constraints);
-            }
-        }
-    }
-    else if (useAudioElement.checked || useVideoElement.checked) {
-        // Start the local video.
-        webRtc.webrtc.createStream(useAudioElement.checked, useVideoElement.checked);
-    }
-}
-/**
- * Close the local stream.
- * @param {WebRtc}    webRtc the implementation.
- */
-function closeLocalVideo(webRtc) {
-    // Close the local stream.
-    webRtc.webrtc.closeStream();
 }
 /**
  * Start recording local stream.
@@ -888,7 +785,7 @@ function makeCall(webRtc) {
             }
         });
         // Disable make call button.
-        videoCallButton.disabled = true;
+        //videoCallButton.disabled = true;
     }
 }
 /**
@@ -907,7 +804,95 @@ function endCall(webRtc) {
         createConferenceContact(webRtc, uniqueID, conferenceApplicationID);
     });
     // Enable make call button.
-    videoCallButton.disabled = false;
+    //videoCallButton.disabled = false;
+}
+/**
+ * send remote track to contact.
+ * @param {WebRtc}    webRtc the implementation.
+ */
+async function remoteTrackCloudflareCall(webRtc) {
+    // If client details set.
+    if (uniqueID && applicationID) {
+        // If contact client details set.
+        if (contactUniqueIDElement.value && contactApplicationIDElement.value) {
+            // send the local tracks to the contact
+            let callClient = webRtc.parent;
+            // get remote tracks.
+            let tracks = callClient.getTracksRemote();
+            let sessionid = callClient.getSessionId();
+            let videoTracks = callClient.webRtcImp.webrtc.webrtcadapter.getStream().getVideoTracks();
+            let audioTracks = callClient.webRtcImp.webrtc.webrtcadapter.getStream().getAudioTracks();
+            let hasVideoTracks = false;
+            let countVideoTracks = 0;
+            if (videoTracks && videoTracks.length > 0) {
+                hasVideoTracks = true;
+                countVideoTracks = videoTracks.length;
+            }
+            let hasAudioTracks = false;
+            let countAudioTracks = 0;
+            if (audioTracks && audioTracks.length > 0) {
+                hasAudioTracks = true;
+                countAudioTracks = audioTracks.length;
+            }
+            // Get the contact.
+            let contacts = callClient.webRtcImp.webrtc.webrtcadapter.getContactPeer(contactUniqueIDElement.value, contactApplicationIDElement.value, false);
+            let contact = contacts[0];
+            // send to contact.
+            let details = {
+                tracks: tracks,
+                remoteTracks: true,
+                sessionID: sessionid,
+                hasVideoTracks: hasVideoTracks,
+                hasAudioTracks: hasAudioTracks,
+                countVideoTracks: countVideoTracks,
+                countAudioTracks: countAudioTracks
+            };
+            // send the tracks to the remote contact.
+            contact.sendDetails(JSON.stringify(details));
+        }
+    }
+}
+/**
+ * Make a call to all the contacts.
+ * @param {WebRtc}    webRtc the implementation.
+ */
+async function makeCloudflareCall(webRtc) {
+    //Cloudflare
+    // If client details set.
+    if (uniqueID && applicationID) {
+        // get the local stream.
+        var localStream = webRtc.webrtc.webrtcadapter.getStream();
+        // create an offer to cloudflare call
+        let callClient = webRtc.parent;
+        await callClient.initContactLocal(uniqueID, applicationID, localStream);
+        // Disable make call button.
+        videoCloudflareCallButton.disabled = true;
+    }
+}
+/**
+ * End the call to all the contacts.
+ * @param {WebRtc}    webRtc the implementation.
+ */
+async function endCloudflareCall(webRtc) {
+    //Cloudflare
+    let callClient = webRtc.parent;
+    // get local.
+    let contacts = callClient.webRtcImp.webrtc.webrtcadapter.getContactPeer(uniqueIDElement.value, applicationIDElement.value, false);
+    let contact = contacts[0];
+    // close the cloudflare call stream
+    // close the tracks
+    await callClient.closeTrack(contact.getSessionId(), uniqueIDElement.value, applicationIDElement.value, contact.getTracks(), contact.peerConnection.localDescription);
+    // Get the remote contact.
+    let contactsRemote = callClient.webRtcImp.webrtc.webrtcadapter.getContactPeer(contactUniqueIDElement.value, contactApplicationIDElement.value, false);
+    let contactRemote = contactsRemote[0];
+    // close the cloudflare call stream
+    // close the tracks
+    await callClient.closeTrack(contactRemote.getSessionIdRemote(), contactUniqueIDElement.value, contactApplicationIDElement.value, contactRemote.getTracks(), contactRemote.peerConnection.localDescription);
+    // remove tracks.
+    contact.closeMediaStreamTracks();
+    contactRemote.closeMediaStreamTracks();
+    // enable make call button.
+    videoCloudflareCallButton.disabled = false;
 }
 /**
  * Change the client settings.
@@ -916,6 +901,9 @@ function endCall(webRtc) {
  */
 async function changeClientSettings(webRtc, accessOptions) {
     try {
+        // reassign IDs
+        uniqueID = uniqueIDElement.value;
+        applicationID = applicationIDElement.value;
         // use login auth.
         if (accessOptions.useLoginAuth) {
             // make the request.
@@ -1011,7 +999,7 @@ function answerCall(webrtc, contact) {
     // If accepted.
     if (acceptCall === true) {
         // Disable make call button.
-        videoCallButton.disabled = true;
+        //videoCallButton.disabled = true;
         // Add the local video stream to the contact stream.
         var localStream = webrtc.webrtcadapter.getStream();
         contact.addStreamTracks(localStream);
@@ -1052,23 +1040,6 @@ function isContactInList(contact) {
 /**
  * Create the contact.
  *
- * @param {WebRtcApp}    webrtc     the webrtc app.
- * @return {ContactPeer} Returns the contact; else null.
- */
-function createContact(webrtc) {
-    // Create the contact.
-    var contact = webrtc.createContact(contactUniqueIDElement.value, contactApplicationIDElement.value);
-    // If the contact exist.
-    if (contact) {
-        return contact;
-    }
-    else {
-        return null;
-    }
-}
-/**
- * Create the contact.
- *
  * @param {WebRtc}    webRtc the implementation.
  * @param {string}      uniqueID       The uniqueID.
  * @param {string}      applicationID  The applicationID.
@@ -1085,6 +1056,59 @@ function createConferenceContact(webRtc, uniqueID, applicationID) {
     else {
         return null;
     }
+}
+/**
+ * Create a new contact.
+ *
+ * @param {string}          uniqueID        The uniqueID of the contact.
+ * @param {applicationID}   applicationID   The applicationID of the contact.
+ */
+function createNewContact(uniqueID, applicationID) {
+    // Create video elements.
+    conferenceDialogVideoRemoteDiv.push(document.createElement("div"));
+    conferenceDialogVideoRemoteDiv[conferenceIndex].id = "dialogVideoRemote" + conferenceIndex;
+    conferenceResizableRemoteDiv.push(document.createElement("div"));
+    conferenceResizableRemoteDiv[conferenceIndex].id = "resizableRemote" + conferenceIndex;
+    conferenceRemoteVideoElement.push(document.createElement("video"));
+    conferenceRemoteVideoElement[conferenceIndex].id = "remoteVideo" + conferenceIndex;
+    conferenceRemoteVideoElement[conferenceIndex].autoplay = true;
+    //conferenceRemoteVideoElement[conferenceIndex].playsInline = true;
+    conferenceRemoteVideoElement[conferenceIndex].controls = true;
+    conferenceRemoteVideoElement[conferenceIndex].width = "380";
+    conferenceRemoteVideoElement[conferenceIndex].height = "340";
+    conferenceResizableRemoteDiv[conferenceIndex].appendChild(conferenceRemoteVideoElement[conferenceIndex]);
+    conferenceDialogVideoRemoteDiv[conferenceIndex].appendChild(conferenceResizableRemoteDiv[conferenceIndex]);
+    containerDivElement.appendChild(conferenceDialogVideoRemoteDiv[conferenceIndex]);
+    conferenceRemoteShowElement.push(document.createElement("input"));
+    conferenceRemoteShowElement[conferenceIndex].id = "videoRemoteShow" + conferenceIndex;
+    conferenceRemoteShowElement[conferenceIndex].type = "button";
+    conferenceRemoteShowElement[conferenceIndex].value = uniqueID;
+    conferenceRemoteShowElement[conferenceIndex].className = "buttonContact ui-button ui-corner-all ui-widget";
+    conferenceRemoteStateElement.push(document.createElement("div"));
+    conferenceRemoteStateElement[conferenceIndex].id = "remoteState" + conferenceIndex;
+    conferenceRemoteStateElement[conferenceIndex].innerHTML = "Unknown";
+    conferenceRemoteStateElement[conferenceIndex].className = "remoteContactsStateClass";
+    conferenceRemoteVolumeElement.push(document.createElement("input"));
+    conferenceRemoteVolumeElement[conferenceIndex].id = "remoteVolume" + conferenceIndex;
+    conferenceRemoteVolumeElement[conferenceIndex].type = "range";
+    conferenceRemoteVolumeElement[conferenceIndex].min = "0";
+    conferenceRemoteVolumeElement[conferenceIndex].max = "100";
+    conferenceRemoteVolumeElement[conferenceIndex].step = "1";
+    conferenceRemoteVolumeElement[conferenceIndex].innerHTML = uniqueID;
+    conferenceRemoteVolumeElement[conferenceIndex].className = "remoteContactsClass";
+    conferenceRemoteVolumeElement[conferenceIndex].addEventListener('change', setVolumeRemote);
+    conferenceRemoteVolumeElement[conferenceIndex].addEventListener('input', setVolumeRemote);
+    conferenceRemoteDiv.push(document.createElement("div"));
+    conferenceRemoteDiv[conferenceIndex].id = "remoteDisplay" + conferenceIndex;
+    conferenceRemoteDiv[conferenceIndex].className = "contactList";
+    conferenceRemoteDiv[conferenceIndex].appendChild(conferenceRemoteShowElement[conferenceIndex]);
+    conferenceRemoteDiv[conferenceIndex].appendChild(conferenceRemoteStateElement[conferenceIndex]);
+    conferenceRemoteDiv[conferenceIndex].appendChild(conferenceRemoteVolumeElement[conferenceIndex]);
+    conatinerDivRemoteVideoShow.appendChild(conferenceRemoteDiv[conferenceIndex]);
+    // Add remote video.
+    initRemoteVideo(conferenceResizableRemoteDiv[conferenceIndex].id, conferenceRemoteVideoElement[conferenceIndex].id, conferenceDialogVideoRemoteDiv[conferenceIndex].id, conferenceRemoteShowElement[conferenceIndex].id, uniqueID, applicationID);
+    // Increment the count.
+    conferenceIndex++;
 }
 /**
  * Create the data contact.
@@ -1196,6 +1220,23 @@ function contactTypingMessageStart(webrtc) {
     }
 }
 /**
+ * Create the contact.
+ *
+ * @param {WebRtcApp}    webrtc     the webrtc app.
+ * @return {ContactPeer} Returns the contact; else null.
+ */
+function createContact(webrtc) {
+    // Create the contact.
+    var contact = webrtc.createContact(contactUniqueIDElement.value, contactApplicationIDElement.value);
+    // If the contact exist.
+    if (contact) {
+        return contact;
+    }
+    else {
+        return null;
+    }
+}
+/**
  * Send a message to the contact that this
  * client has stopped typing a message to the contact.
  * @param {WebRtcApp}    webrtc     the webrtc app.
@@ -1218,6 +1259,53 @@ function contactTypingMessageStop(webrtc) {
             webrtc.webrtcadapter.stoppedTypingMessage(contUniqueID, contApplicationID);
         }
     }
+}
+/**
+ * Start the video and audio.
+ * @param {WebRtc}    webRtc the implementation.
+ */
+function startLocalVideo(webRtc) {
+    // Add the local video element.
+    webRtc.webrtc.setLocalVideoElement(localVideoElement);
+    // if screen or window.
+    if (useScreenElement.checked || useWindowElement.checked) {
+        // use screen
+        if (useScreenElement.checked) {
+            // Capture constraints
+            let constraints = {
+                video: {
+                    displaySurface: 'screen'
+                },
+                audio: true
+            };
+            webRtc.webrtc.createStreamCaptureEx(constraints);
+        }
+        else {
+            // use window
+            if (useWindowElement.checked) {
+                // Capture constraints
+                let constraints = {
+                    video: {
+                        displaySurface: 'window'
+                    },
+                    audio: true
+                };
+                webRtc.webrtc.createStreamCaptureEx(constraints);
+            }
+        }
+    }
+    else if (useAudioElement.checked || useVideoElement.checked) {
+        // Start the local video.
+        webRtc.webrtc.createStream(useAudioElement.checked, useVideoElement.checked);
+    }
+}
+/**
+ * Close the local stream.
+ * @param {WebRtc}    webRtc the implementation.
+ */
+function closeLocalVideo(webRtc) {
+    // Close the local stream.
+    webRtc.webrtc.closeStream();
 }
 /**
  * Set the local video volume
