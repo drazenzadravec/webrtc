@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <title>WebRTC P2P Mesh</title>
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="css/webrtc-main.css" />
+    <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+</head>
+<body>
+    <div class="tabHeader">
+        <input type="button" value="Initialise" class="tabLink" id="bOne" />
+        <input type="button" value="Video & Audio" class="tabLink" id="bTwo" />
+        <input type="button" value="Join" class="tabLink" id="bThree" />
+        <input type="button" value="Message" class="tabLink" id="bFour" />
+        <input type="button" value="File Transfer" class="tabLink" id="bFive" />
+        <input type="button" value="Recording" class="tabLink" id="bSix" />
+        <input type="button" value="Group List" class="tabLink" id="bSeven" />
+    </div>
+
+    <div id="container" class="body-content">
+        <div id="divOne" class="tabContent">
+            <div class="divAlertText">
+                <div class="divSpacer"></div>
+                <div>
+                    <div class="divID">
+                        <label class="labelClass">Unique ID</label>
+                        <input id="uniqueID" type="text" class="textInput" />
+                    </div>
+                </div>
+                <div>
+                    <div class="divID">
+                        <label class="labelClass">Application ID</label>
+                        <input id="applicationID" type="text" class="textInput" />
+                    </div>
+                </div>
+                <div>
+                    <div class="divID">
+                        <label class="labelClass">Your State</label>
+                        <input id="clientState" type="text" class="textInput" />
+                    </div>
+                </div>
+                <div>
+                    <input id="available" type="checkbox" checked />
+                    <label for="available">Available for contact</label>
+                </div>
+                <div>
+                    <input id="broadcast" type="checkbox" />
+                    <label for="broadcast">Allow contacts to see your unique id.</label>
+                </div>
+                <div>
+                    <input id="broadcastAppID" type="checkbox" />
+                    <label for="broadcastAppID">Allow contacts to see your application id.</label>
+                </div>
+                <div>
+                    <input id="changeSettingsButton" type="button" value="Change Settings" class="ui-button ui-corner-all ui-widget" />
+                    <input id="clientStateButton" type="button" value="Send Your State" class="ui-button ui-corner-all ui-widget" />
+                </div>
+            </div>
+            <div class="divAlertText">
+                <div id="alertText"></div>
+            </div>
+        </div>
+        <div id="divTwo" class="tabContent">
+            <div class="divAlertText">
+                <div>
+                    <input id="startCamButton" type="button" value="Start Video & Audio" class="ui-button ui-corner-all ui-widget" />
+                    <input id="useVideo" type="checkbox" checked />
+                    <label for="useVideo">Use Video</label>
+                    <input id="useAudio" type="checkbox" checked />
+                    <label for="useAudio">Use Audio</label>
+                    <input id="useScreen" type="checkbox" />
+                    <label for="useScreen">Use Screen</label>
+                    <input id="useWindow" type="checkbox" />
+                    <label for="useWindow">Use Window</label>
+                </div>
+                <div>
+                    <input id="stopCamButton" type="button" value="Stop Video & Audio" class="ui-button ui-corner-all ui-widget" />
+                    <input id="videoLocalShow" type="button" value="Local Video" class="ui-button ui-corner-all ui-widget" />
+                    <input id="videoRemoteShow" type="button" value="Remote Video(s)" class="ui-button ui-corner-all ui-widget" />
+                </div>
+                <div>
+                    <input id="toggleMuteAudioButton" type="checkbox" />
+                    <label for="toggleMuteAudioButton">Mute Video & Audio</label>
+                </div>
+                <div class="divSpacer"></div>
+                <div>
+                    <label for="localVolumeControl" class="labelClass1">Local Volume Control</label>
+                    <input id="localVolumeControl" type="range" min="0" max="100" step="1" />
+                </div>
+                <div class="divSpacer"></div>
+                <div>
+                    <label for="audioSource">Audio input source: </label>
+                    <select id="audioSource"></select>
+                </div>
+                <div>
+                    <label for="audioOutput">Audio output destination: </label>
+                    <select id="audioOutput"></select>
+                </div>
+                <div>
+                    <label for="videoSource">Video source: </label>
+                    <select id="videoSource"></select>
+                </div>
+            </div>
+        </div>
+        <div id ="divThree" class="tabContent">
+            <div class="divAlertText">
+                <div>
+                    <input id="videoCallButton" type="button" value="Join Conference" class="ui-button ui-corner-all ui-widget" />
+                    <input id="endCallButton" type="button" value="Leave Conference" class="ui-button ui-corner-all ui-widget" />
+                    <input id="contactAvailableButton" type="button" value="Is Contact Available" class="ui-button ui-corner-all ui-widget" />
+                </div>
+                <div class="divAlertTextInt">
+                    <div id="alertTextBack"></div>
+                </div>
+            </div>
+        </div>
+        <div id ="divFour" class="tabContent">
+            <div class="divAlertText">
+                <div>
+                    <div class="divID1">
+                        <label class="labelClass1">Contact Unique ID</label>
+                        <input id="contactUniqueID" type="text" class="textInput" />
+                    </div>
+                </div>
+                <div>
+                    <div class="divID1">
+                        <label class="labelClass1">Contact Application ID</label>
+                        <input id="contactApplicationID" type="text" class="textInput" />
+                    </div>
+                </div>
+                <div>
+                    <input id="contactSendMessage" type="text" class="textSendMessage" />
+                </div>
+                <div>
+                    <input id="contactSendMessageButton" type="button" value="Send Message To Contact" class="ui-button ui-corner-all ui-widget" />
+                    <input id="contactSendMessageClearButton" type="button" value="Clear Sent Message(s)" class="ui-button ui-corner-all ui-widget" />
+                </div>
+                <div class="divAlertTextInt">
+                    <div id="alertTextMessage"></div>
+                </div>
+            </div>
+        </div>
+        <div id ="divFive" class="tabContent">
+            <div class="divAlertText">
+                <section>
+                    <form id="fileInfo">
+                        <input type="file" id="fileInput" name="files" />
+                    </form>
+                    <div>
+                        <input id="fileInputStartTransferButton" type="button" value="Start File Transfer" class="ui-button ui-corner-all ui-widget" />
+                        <input id="fileInputStopTransferButton" type="button" value="Close File Transfer" class="ui-button ui-corner-all ui-widget" />
+                    </div>
+                    <div class="progress">
+                        <div class="labelProgress">Progress: </div>
+                        <progress id="sendReceiveProgress" value="0" class="ui-progressbar ui-corner-all ui-widget ui-widget-content"></progress>
+                    </div>
+                    <div><a id="download"></a></div>
+                    <div><span id="status"></span></div>
+                </section>
+            </div>
+        </div>
+        <div id ="divSix" class="tabContent">
+            <div class="divAlertText">
+                <div>
+                    <input id="startRecodingButton" type="button" value="Start Recording Video & Audio" class="ui-button ui-corner-all ui-widget" />
+                    <input id="stopRecodingButton" type="button" value="Stop Recording Video & Audio" class="ui-button ui-corner-all ui-widget" />
+                </div>
+            </div>
+        </div>
+        <div id ="divSeven" class="tabContent">
+            <div class="divAlertText">
+                <div>
+                    <input id="contactApplicationIDListButton" type="button" value="Application ID List" class="ui-button ui-corner-all ui-widget" />
+                    <input id="contactUniqueIDListButton" type="button" value="Unique ID List" class="ui-button ui-corner-all ui-widget" />
+                    <input id="contactGroupListButton" type="button" value="Group ID List" class="ui-button ui-corner-all ui-widget" />
+                    <input id="contactClearListButton" type="button" value="Clear Contact List" class="ui-button ui-corner-all ui-widget" />
+                </div>
+                <div class="divAlertListText">
+                    <div id="alertTextList"></div>
+                </div>
+            </div>
+        </div>
+        <div id="dialogVideoLocal">
+            <div id="resizableLocal">
+                <video id="localVideo" autoplay playsInline controls width="380" height="340"></video>
+            </div>
+        </div>
+        <div id="dialogRemoteVideoShow">
+            <input id="addNewContact" type="button" value="Add New Contact" class="ui-button ui-corner-all ui-widget" />
+            <input id="muteAllRemote" type="checkbox" />
+            <label for="muteAllRemote">Mute All Remote Audio</label>
+            <div class="divSpacer"></div>
+            <div id="remoteVideoShow"></div>
+        </div>
+        <div id="dialogAddNewContact">
+            <div>
+                <div class="divID1">
+                    <label class="labelClass1">Contact Unique ID</label>
+                    <input id="contactUniqueIDAddNew" type="text" class="textInput" />
+                </div>
+                <div></div>
+                <div class="divID1">
+                    <label class="labelClass1">Contact Application ID</label>
+                    <input id="contactApplicationIDAddNew" type="text" class="textInput" />
+                </div>
+            </div>
+        </div>
+    </div>
+    <script type="text/javascript" src="lib/ui.bundle.js"></script>
+    <script type="text/javascript" src="lib/main-app.js"></script>
+    <script type="module" src="lib/app-main.mjs"></script>
+</body>
+</html>
