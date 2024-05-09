@@ -1,4 +1,4 @@
-version: 2
-
-submodules:
-  include: all
+site_name: WebRTC
+nav:
+  - Home: README.MD
+theme: readthedocs
