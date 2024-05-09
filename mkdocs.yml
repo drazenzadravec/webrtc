@@ -1,4 +1,5 @@
 site_name: WebRTC
+docs_dir: ./docs
 nav:
-  - Home: README.MD
+  - Home: index.md
 theme: readthedocs
