@@ -1,1 +1,2 @@
-## This contains a complete implementation of a WebRTC client
+## A complete implementation of a WebRTC client
+
