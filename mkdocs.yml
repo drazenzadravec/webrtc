@@ -3,6 +3,6 @@ docs_dir: ./docs
 nav:
   - Home: index.md
   - Cloudflare Calls: 
-    - Cloudflare: /cloudflarecalls/cloudflare.md
-    - Calls: /cloudflarecalls/calls.md
+    - Cloudflare: ./cloudflarecalls/cloudflare.md
+    - Calls: ./cloudflarecalls/calls.md
 theme: readthedocs
