@@ -12,4 +12,4 @@ Includes an implementation of Cloudflare Calls.
 
 #### WebRTC Cloudflare Calls SFU
 
-[![WebRTC Cloudflare Calls SFU](https://nequeo-public.s3.ap-southeast-2.amazonaws.com/media/math-calculator-statistics.png)](https://www.dznequeo.net/awsapi/site/webrtc/cloudflare/)
+[![WebRTC Cloudflare Calls SFU](https://nequeo-public.s3.ap-southeast-2.amazonaws.com/media/webrtc-cloudflare-calls-sfu.png)](https://www.dznequeo.net/awsapi/site/webrtc/cloudflare/)
