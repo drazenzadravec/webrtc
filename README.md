@@ -10,7 +10,9 @@ TypeScript, Javascript
 
 <a href="https://nequeo-public.s3.ap-southeast-2.amazonaws.com/media/webrtc-cloudflare-calls-sfu.mkv" target="_blank">WebRTC Cloudflare Calls SFU: Demo Video</a>
 
-![Watch](https://nequeo-public.s3.ap-southeast-2.amazonaws.com/media/webrtc-cloudflare-calls-sfu.mkv)
+<video width="320" height="240" controls>
+  <source src="https://nequeo-public.s3.ap-southeast-2.amazonaws.com/media/webrtc-cloudflare-calls-sfu.mkv" type="video/mkv">
+</video>
 
 
 ## Image
